@@ -3,25 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic-Tac-Toe</title>
+    <title>Login Page</title>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Tic-Tac-Toe</h1>
-        <div class="board" id="board">
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-            <div class="cell" data-cell></div>
-        </div>
-        <button id="restartButton">Restart</button>
+    <div id="login-page">
+        <h2>Login</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
     </div>
-    <script src="script.js"></script>
+
+    <div id="students-page" style="display:none;">
+        <h2>Students List</h2>
+        <button onclick="showAddStudentModal()">Add Student</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Section</th>
+                    <th>Roll Number</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="students-table-body">
+                <!-- Students data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="add-student-modal" style="display:none;">
+        <h2>Add Student</h2>
+        <form id="add-student-form">
+            <input type="text" id="student-id" placeholder="ID">
+            <input type="text" id="student-name" placeholder="Name">
+            <input type="text" id="student-class" placeholder="Class">
+            <input type="text" id="student-section" placeholder="Section">
+            <input type="text" id="student-roll-number" placeholder="Roll Number">
+            <!-- Add more fields as needed -->
+            <button type="button" onclick="addStudent()">Submit</button>
+        </form>
+    </div>
+
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-auth-domain",
+            projectId: "your-project-id",
+            storageBucket: "your-storage-bucket",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "your-app-id"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        function login() {
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    document.getElementById('login-page').style.display = 'none';
+                    document.getElementById('students-page').style.display = 'block';
+                    loadStudents();
+                })
+                .catch((error) => {
+                    alert("Error logging in: " + error.message);
+                });
+        }
+
+        function loadStudents() {
+            db.collection("students").get().then((querySnapshot) => {
+                var studentsTableBody = document.getElementById('students-table-body');
+                studentsTableBody.innerHTML = '';
+                querySnapshot.forEach((doc) => {
+                    var student = doc.data();
+                    var row = `<tr>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.class}</td>
+                        <td>${student.section}</td>
+                        <td>${student.rollNumber}</td>
+                        <td>
+                            <button onclick="viewStudent('${doc.id}')">View</button>
+                            <button onclick="editStudent('${doc.id}')">Edit</button>
+                            <button onclick="deleteStudent('${doc.id}')">Delete</button>
+                        </td>
+                    </tr>`;
+                    studentsTableBody.innerHTML += row;
+                });
+            });
+        }
+
+        function showAddStudentModal() {
+            document.getElementById('add-student-modal').style.display = 'block';
+        }
+
+        function addStudent() {
+            var student = {
+                id: document.getElementById('student-id').value,
+                name: document.getElementById('student-name').value,
+                class: document.getElementById('student-class').value,
+                section: document.getElementById('student-section').value,
+                rollNumber: document.getElementById('student-roll-number').value,
+                // Add more fields as needed
+            };
+            db.collection("students").add(student).then(() => {
+                document.getElementById('add-student-modal').style.display = 'none';
+                loadStudents();
+            }).catch((error) => {
+                console.error("Error adding student: ", error);
+            });
+        }
+
+        function viewStudent(id) {
+            // Implement view student functionality
+        }
+
+        function editStudent(id) {
+            // Implement edit student functionality
+        }
+
+        function deleteStudent(id) {
+            db.collection("students").doc(id).delete().then(() => {
+                loadStudents();
+            }).catch((error) => {
+                console.error("Error deleting student: ", error);
+            });
+        }
+    </script>
 </body>
 </html>
